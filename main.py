@@ -1,229 +1,206 @@
-import pickle
-import os
-import pathlib
-class Account :
-    accNo = 0
-    name = ''
-    deposit=0
-    type = ''
-    
-    def createAccount(self):
-        self.accNo= int(input("Enter the account no : "))
-        self.name = input("Enter the account holder name : ")
-        self.type = input("Ente the type of account [C/S] : ")
-        self.deposit = int(input("Enter The Initial amount(>=500 for Saving and >=1000 for current"))
-        print("\n\n\nAccount Created")
-    
-    def showAccount(self):
-        print("Account Number : ",self.accNo)
-        print("Account Holder Name : ", self.name)
-        print("Type of Account",self.type)
-        print("Balance : ",self.deposit)
-    
-    def modifyAccount(self):
-        print("Account Number : ",self.accNo)
-        self.name = input("Modify Account Holder Name :")
-        self.type = input("Modify type of Account :")
-        self.deposit = int(input("Modify Balance :"))
+class Bank:
+    def __init__(self):
+        self.client_details_list = []
+        self.loggedin = False
+        self.cash = 100
+        self.TranferCash = False
+
+    def register(self, name , ph , password):
+        cash = self.cash
+        contitions = True
+        if len(str(ph)) > 10 or len(str(ph)) < 10:
+            print("Invalid Phone number ! please enter 10 digit number")
+            contitions = False
+
+        if len(password) < 5 or len(password) > 18:
+            print("Enter password greater than 5 and less than 18 character")
+            contitions = False  
         
-    def depositAmount(self,amount):
-        self.deposit += amount
+        if contitions == True:
+            print("Account created successfully")
+            self.client_details_list = [name , ph , password , cash]
+            with open(f"{name}.txt","w") as f:
+                for details in self.client_details_list:
+                    f.write(str(details)+"\n")
+
+
+    def login(self, name , ph , password):
+        with open(f"{name}.txt","r") as f:
+            details = f.read()
+            self.client_details_list = details.split("\n")
+            if str(ph) in str(self.client_details_list):
+                if str(password) in str(self.client_details_list):
+                    self.loggedin = True
+
+            if self.loggedin == True:
+                print(f"{name} logged in")
+                self.cash = int(self.client_details_list[3])
+                self.name = name
+            
+            else:
+                print("Wrong details")
     
-    def withdrawAmount(self,amount):
-        self.deposit -= amount
-    
-    def report(self):
-        print(self.accNo, " ",self.name ," ",self.type," ", self.deposit)
-    
-    def getAccountNo(self):
-        return self.accNo
-    def getAcccountHolderName(self):
-        return self.name
-    def getAccountType(self):
-        return self.type
-    def getDeposit(self):
-        return self.deposit
-    
+    def add_cash(self, amount):
+        if amount > 0:
+            self.cash += amount
+            with open(f"{name}.txt","r") as f:
+                details = f.read()
+                self.client_details_list = details.split("\n")
+            
+            with open(f"{name}.txt","w") as f:
+                f.write(details.replace(str(self.client_details_list[3]),str(self.cash)))
 
-def intro():
-    print("\t\t\t\t**********************")
-    print("\t\t\t\tBANK MANAGEMENT SYSTEM")
-    print("\t\t\t\t**********************")
+            print("Amount added successfully")
 
-    
-    input()
+        else:
+            print("Enter correct value of amount")
 
+    def Tranfer_cash(self, amount , name ,ph):
+        with open(f"{name}.txt","r") as f:
+            details = f.read()
+            self.client_details_list = details.split("\n")
+            if str(ph) in self.client_details_list:
+                self.TranferCash = True
 
-
-def writeAccount():
-    account = Account()
-    account.createAccount()
-    writeAccountsFile(account)
-
-def displayAll():
-    file = pathlib.Path("accounts.data")
-    if file.exists ():
-        infile = open('accounts.data','rb')
-        mylist = pickle.load(infile)
-        for item in mylist :
-            print(item.accNo," ", item.name, " ",item.type, " ",item.deposit )
-        infile.close()
-    else :
-        print("No records to display")
         
+        if self.TranferCash == True:
+            total_cash = int(self.client_details_list[3]) + amount
+            left_cash = self.cash - amount
+            with open(f"{name}.txt","w") as f:
+                f.write(details.replace(str(self.client_details_list[3]),str(total_cash)))
 
-def displaySp(num): 
-    file = pathlib.Path("accounts.data")
-    if file.exists ():
-        infile = open('accounts.data','rb')
-        mylist = pickle.load(infile)
-        infile.close()
-        found = False
-        for item in mylist :
-            if item.accNo == num :
-                print("Your account Balance is = ",item.deposit)
-                found = True
-    else :
-        print("No records to Search")
-    if not found :
-        print("No existing record with this number")
+            with open(f"{self.name}.txt","r") as f:
+                details_2 = f.read()
+                self.client_details_list = details_2.split("\n")
+            
+            with open(f"{self.name}.txt","w") as f:
+                f.write(details_2.replace(str(self.client_details_list[3]),str(left_cash)))
 
-def depositAndWithdraw(num1,num2): 
-    file = pathlib.Path("accounts.data")
-    if file.exists ():
-        infile = open('accounts.data','rb')
-        mylist = pickle.load(infile)
-        infile.close()
-        os.remove('accounts.data')
-        for item in mylist :
-            if item.accNo == num1 :
-                if num2 == 1 :
-                    amount = int(input("Enter the amount to deposit : "))
-                    item.deposit += amount
-                    print("Your account is updted")
-                elif num2 == 2 :
-                    amount = int(input("Enter the amount to withdraw : "))
-                    if amount <= item.deposit :
-                        item.deposit -=amount
-                    else :
-                        print("You cannot withdraw larger amount")
+            print("Amount Transfered Successfully to",name,"-",ph)
+            print("Balacne left =",left_cash)
+            self.cash = left_cash
+    
+    def password_change(self, password):
+        if len(password) < 5 or len(password) > 18:
+            print("Enter password greater than 5 and less than 18 character")
+        else:
+            with open(f"{self.name}.txt","r") as f:
+                details = f.read()
+                self.client_details_list = details.split("\n")
+
+            with open(f"{self.name}.txt","w") as f:
+                f.write(details.replace(str(self.client_details_list[2]),str(password)))
+            print("new Password set up successfully")
+        
+    def ph_change(self , ph):
+        if len(str(ph)) > 10 or len(str(ph)) < 10:
+            print("Invalid Phone number ! please enter 10 digit number")
+        else:
+            with open(f"{self.name}.txt","r") as f:
+                details = f.read()
+                self.client_details_list = details.split("\n")
+
+            with open(f"{self.name}.txt","w") as f:
+                f.write(details.replace(str(self.client_details_list[1]),str(ph)))
+            print("new Phone number set up successfully")
+
+
+
+if __name__ == "__main__":
+    Bank_object = Bank()
+    print("Welcome to my Bank")
+    print("1.Login")
+    print("2.Creata a new Account")
+    user = int(input("Make decision: "))
+
+    if user == 1:
+        print("Logging in")
+        name = input("Enter Name: ")
+        ph = int(input("Enter Phone Number: "))
+        password = input("Enter password: ")
+        Bank_object.login(name, ph, password)
+        while True:
+            if Bank_object.loggedin:
+                print("1.Add amount")
+                print("2.Check Balcane")
+                print("3.Tranfer amount")
+                print("4.Edit profile")
+                print("5.Logout")
+                login_user = int(input())
+                if login_user == 1:
+                    print("Balance =",Bank_object.cash)
+                    amount = int(input("Enter amount: "))
+                    Bank_object.add_cash(amount)
+                    print("\n1.back menu")
+                    print("2.Logout")
+                    choose = int(input())
+                    if choose == 1:
+                        continue
+                    elif choose == 2:
+                        break
                 
-    else :
-        print("No records to Search")
-    outfile = open('newaccounts.data','wb')
-    pickle.dump(mylist, outfile)
-    outfile.close()
-    os.rename('newaccounts.data', 'accounts.data')
+                elif login_user == 2:
+                    print("Balacne =",Bank_object.cash)
+                    print("\n1.back menu")
+                    print("2.Logout")
+                    choose = int(input())
+                    if choose == 1:
+                        continue
+                    elif choose == 2:
+                        break
 
-    
-def deleteAccount(num):
-    file = pathlib.Path("accounts.data")
-    if file.exists ():
-        infile = open('accounts.data','rb')
-        oldlist = pickle.load(infile)
-        infile.close()
-        newlist = []
-        for item in oldlist :
-            if item.accNo != num :
-                newlist.append(item)
-        os.remove('accounts.data')
-        outfile = open('newaccounts.data','wb')
-        pickle.dump(newlist, outfile)
-        outfile.close()
-        os.rename('newaccounts.data', 'accounts.data')
-     
-def modifyAccount(num):
-    file = pathlib.Path("accounts.data")
-    if file.exists ():
-        infile = open('accounts.data','rb')
-        oldlist = pickle.load(infile)
-        infile.close()
-        os.remove('accounts.data')
-        for item in oldlist :
-            if item.accNo == num :
-                item.name = input("Enter the account holder name : ")
-                item.type = input("Enter the account Type : ")
-                item.deposit = int(input("Enter the Amount : "))
-        
-        outfile = open('newaccounts.data','wb')
-        pickle.dump(oldlist, outfile)
-        outfile.close()
-        os.rename('newaccounts.data', 'accounts.data')
-   
+                elif login_user == 3:
+                    print("Balance =",Bank_object.cash)
+                    amount = int(input("Enter amount: "))
+                    if amount >= 0 and amount <= Bank_object.cash:
+                        name = input("Enter person name: ")
+                        ph = input("Enter person phone number: ")
+                        Bank_object.Tranfer_cash(amount,name,ph)
+                        print("\n1.back menu")
+                        print("2.Logout")
+                        choose = int(input())
+                        if choose == 1:
+                            continue
+                        elif choose == 2:
+                            break
+                    elif amount < 0 :
+                        print("Enter please correct value of amount")
 
-def writeAccountsFile(account) : 
-    
-    file = pathlib.Path("accounts.data")
-    if file.exists ():
-        infile = open('accounts.data','rb')
-        oldlist = pickle.load(infile)
-        oldlist.append(account)
-        infile.close()
-        os.remove('accounts.data')
-    else :
-        oldlist = [account]
-    outfile = open('newaccounts.data','wb')
-    pickle.dump(oldlist, outfile)
-    outfile.close()
-    os.rename('newaccounts.data', 'accounts.data')
-    
-        
-# start of the program
-ch=''
-num=0
-intro()
+                    elif amount > Bank_object.cash:
+                        print("Not enough balance")
 
-while ch != 8:
-    #system("cls");
-    print("\tMAIN MENU")
-    print("\t1. NEW ACCOUNT")
-    print("\t2. DEPOSIT AMOUNT")
-    print("\t3. WITHDRAW AMOUNT")
-    print("\t4. BALANCE ENQUIRY")
-    print("\t5. ALL ACCOUNT HOLDER LIST")
-    print("\t6. CLOSE AN ACCOUNT")
-    print("\t7. MODIFY AN ACCOUNT")
-    print("\t8. EXIT")
-    print("\tSelect Your Option (1-8) ")
-    ch = input()
-    #system("cls");
-    
-    if ch == '1':
-        writeAccount()
-    elif ch =='2':
-        num = int(input("\tEnter The account No. : "))
-        depositAndWithdraw(num, 1)
-    elif ch == '3':
-        num = int(input("\tEnter The account No. : "))
-        depositAndWithdraw(num, 2)
-    elif ch == '4':
-        num = int(input("\tEnter The account No. : "))
-        displaySp(num)
-    elif ch == '5':
-        displayAll();
-    elif ch == '6':
-        num =int(input("\tEnter The account No. : "))
-        deleteAccount(num)
-    elif ch == '7':
-        num = int(input("\tEnter The account No. : "))
-        modifyAccount(num)
-    elif ch == '8':
-        print("\tThanks for using bank managemnt system")
-        break
-    else :
-        print("Invalid choice")
-    
-    ch = input("Enter your choice : ")
-    
+                elif login_user == 4:
+                    print("1.Password change")
+                    print("2.Phone Number change")
+                    edit_profile = int(input())
+                    if edit_profile == 1:
+                        new_passwrod = input("Enter new Password: ")
+                        Bank_object.password_change(new_passwrod)
+                        print("\n1.back menu")
+                        print("2.Logout")
+                        choose = int(input())
+                        if choose == 1:
+                            continue
+                        elif choose == 2:
+                            break
+                    elif edit_profile == 2:
+                        new_ph = int(input("Enter new Phone Number: "))
+                        Bank_object.ph_change(new_ph)
+                        print("\n1.back menu")
+                        print("2.Logout")
+                        choose = int(input())
+                        if choose == 1:
+                            continue
+                        elif choose == 2:
+                            break
 
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+                elif login_user == 5:
+                    break
+                        
+                
+    if user == 2:
+        print("Creating a new  Account")
+        name = input("Enter Name: ")
+        ph = int(input("Enter Phone Number: "))
+        password = input("Enter password: ")
+        Bank_object.register(name, ph, password)
